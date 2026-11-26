@@ -34,3 +34,18 @@ test('trocar de cofre preserva o valor local e incorpora registros exclusivos do
   assert.deepEqual(result.goal, remote.goal);
   assert.deepEqual(merge(remote, result), result);
 });
+
+test('renomear preserva saldo e histórico e a sincronização não ressuscita o nome antigo',()=>{
+ const ids=[L.depositKey('Viagem',L.date(202611,3)),L.depositKey('Viagem',L.date(202611,5))];
+ const rows=Object.fromEntries(ids.map((id,i)=>[id,{clock:i+1,device:'mac',value:L.content('budget',(i+1)*100)}]));
+ const next=L.renameBox(rows,'Viagem','Férias 🏖','phone');
+ const items=L.deposits(L.merge(rows,next));
+ assert.equal(L.sum(items),300);
+ assert.deepEqual(items.map(d=>d.day),[20261105,20261103]);
+ assert.ok(items.every(d=>d.box==='Férias 🏖'));
+ assert.ok(ids.every(id=>next[id].value.deleted));
+ assert.equal(L.deposits(rows).length,2);
+ assert.throws(()=>L.renameBox(next,'Férias 🏖','  ','phone'));
+ const withOther={...next,[L.depositKey('Reserva',L.date(202611))]:{clock:9,device:'mac',value:L.content('budget',200)}};
+ assert.throws(()=>L.renameBox(withOther,'Férias 🏖','reserva','phone'),/Já existe/);
+});
