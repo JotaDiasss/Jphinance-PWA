@@ -40,11 +40,9 @@ input[type=date]::-webkit-datetime-edit{min-width:0;padding:0}
 /* Both screens and the selection capsule follow the same continuous glide. */
 body{overflow-x:hidden}
 .page-transition-layer{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:1}
-.page-outgoing{max-width:900px;padding:12px 20px calc(126px + env(safe-area-inset-bottom));will-change:transform;backface-visibility:hidden}
+.page-outgoing{will-change:transform;backface-visibility:hidden}
 .page-moving{will-change:transform;backface-visibility:hidden;pointer-events:none}
 .nav-indicator{transform:translate3d(0,0,0);transition:transform .2s linear,width .2s linear;will-change:transform}
 nav button{transition:color .3s ease,background .2s ease;transform:none!important}
 nav button .icon{transition:color .3s ease;transform:none!important}
-@media(min-width:700px){.page-outgoing{padding-top:20px}}
-@media(max-width:359px){.page-outgoing{padding-left:14px;padding-right:14px}}
 @media(prefers-reduced-motion:reduce){.nav-indicator{transition:none}}

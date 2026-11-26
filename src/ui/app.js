@@ -61,7 +61,9 @@ async function changePage(id){
   if(pageMotion){queuedPage=id;return;}
   if(active===id)return;
   const direction=pages.findIndex(([key])=>key===id)>pages.findIndex(([key])=>key===active)?1:-1;
-  const screen=$('screen'),rect=screen.getBoundingClientRect();
+  // When scrolled, the header also changes position as the destination opens at the top.
+  const screen = window.scrollY > 0 ? ($('page-content') || $('screen')) : $('screen');
+  const rect = screen.getBoundingClientRect();
   let layer=null,outgoing=null;
   if(!reducedMotion()){
     // Keep the old screen visible while the new screen pushes it away.
