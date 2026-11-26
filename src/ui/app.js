@@ -17,7 +17,7 @@ const card=(title,body,cls='')=>`<section class="card ${cls}">${title?`<h2>${esc
 const big=(n)=>`<div class="amount ${n<0?'negative':'mint'}">${L.money(n)}</div>`;
 const row=(label,cents)=>`<div class="row entry"><span>${esc(label)}</span><strong>${L.money(cents)}</strong></div>`;
 const expenseRow=e=>`<div class="row entry"><div><strong>${esc(e.title)}</strong><small>${esc(e.category)} · ${L.fromSwift(e.date).toLocaleDateString('pt-BR')}${e.monthlyRates?.length?' · Mensal':''}</small></div><div><strong>${L.money(e.cents)}</strong><div class="actions">${button('Editar','expense',e.id)}${button('Excluir','delete',e.id,'danger')}</div></div></div>`;
-function render(){const expenses=L.entries(rows,current()),spent=L.sum(expenses),budget=L.value(rows.budget,'budget')||0,goal=L.value(rows.goal,'goal'),savings=L.deposits(rows);let html='';if(!$('nav').children.length)$('nav').innerHTML=`<div class="nav-indicator" style="--tab:${pages.findIndex(([id])=>id===active)}"></div>`+pages.map(([id,label])=>`<button class="${active===id?'active':''}" data-action="page" data-arg="${id}" ${active===id?'aria-current="page"':''}>${icon(id)}<span>${label}</span></button>`).join('');$('nav').querySelector('.nav-indicator').style.setProperty('--tab',pages.findIndex(([id])=>id===active));for(const tab of $('nav').querySelectorAll('button')){const chosen=tab.dataset.arg===active;tab.classList.toggle('active',chosen);if(chosen)tab.setAttribute('aria-current','page');else tab.removeAttribute('aria-current')}
+function render(){const expenses=L.entries(rows,current()),spent=L.sum(expenses),budget=L.value(rows.budget,'budget')||0,goal=L.value(rows.goal,'goal'),savings=L.deposits(rows);let html='';if(!$('nav').children.length)$('nav').innerHTML=`<div class="nav-indicator" style="--tab:${pages.findIndex(([id])=>id===active)}"></div>`+pages.map(([id,label])=>`<button class="${active===id?'active':''}" data-action="page" data-arg="${id}" ${active===id?'aria-current="page"':''}>${icon(id)}<span>${label}</span></button>`).join('');updateNavIndicator();for(const tab of $('nav').querySelectorAll('button')){const chosen=tab.dataset.arg===active;tab.classList.toggle('active',chosen);if(chosen)tab.setAttribute('aria-current','page');else tab.removeAttribute('aria-current')}
 if(active==='home'){const totals={};for(const e of expenses)totals[e.category]=(totals[e.category]||0)+e.cents;html=`<h1>Seu dinheiro, claro.</h1>${card('Disponível neste mês',big(budget-spent)+`<div class="row"><div><small>Orçamento</small><strong>${L.money(budget)}</strong></div><div><small>Gastos</small><strong>${L.money(spent)}</strong></div></div><div class="actions">${button('+ Novo gasto','expense','','primary')}${button('Orçamento','budget')}</div>`,'hero')}<div class="grid">${card('Por categoria',Object.entries(totals).map(([k,v])=>`<div class="row"><span>${esc(k)}</span><strong>${L.money(v)}</strong></div><div class="bar" style="width:${100*v/Math.max(1,spent)}%"></div>`).join('')||'<p>Nenhum gasto neste mês.</p>')}${card('Caixinhas',big(L.sum(savings))+button('Abrir caixinhas','page','savings'))}${card('Últimos gastos',expenses.filter(e=>L.stamp(L.fromSwift(e.date))<=L.stamp(today())).slice(0,4).map(expenseRow).join('')||'<p>Seus lançamentos aparecem aqui.</p>')}</div>`;}
 if(active==='agenda'){const es=L.entries(rows,selected),first=L.date(selected),days=new Date(first.getFullYear(),first.getMonth()+1,0).getDate();let cells=['D','S','T','Q','Q','S','S'].map(s=>`<small>${s}</small>`).join('')+'<span></span>'.repeat(first.getDay());for(let d=1;d<=days;d++)cells+=button(d,'day',d,(day===d?'chosen ':'')+(es.some(e=>L.fromSwift(e.date).getDate()===d)?'marked':''));const filtered=day?es.filter(e=>L.fromSwift(e.date).getDate()===day):es;html=`<h1>Agenda</h1>${card('',`<div class="row month">${button('‹','month',-1)}<strong>${mname(selected)}</strong>${button('›','month',1)}</div><div class="calendar">${cells}</div><div class="actions">${button('Mês inteiro','day','')}${button('+ Gasto','expense','','primary')}</div>`)}${card(day?'Dia '+day:'Mês inteiro',big(L.sum(filtered))+filtered.map(expenseRow).join('')+(filtered.length?'':'<p>Nenhum lançamento.</p>')+row('Mês anterior',L.sum(L.entries(rows,L.shift(selected,-1)))))}`;}
 if(active==='monthly'){const es=L.expenseRoots(rows).filter(e=>e.monthlyRates?.length&&e.endsBefore==null).map(e=>L.occurrence(e,Math.max(current(),e.monthlyRates[0].start))).filter(Boolean);html=`<h1>Gastos fixos</h1>${card('Total deste mês',big(L.sum(expenses.filter(e=>e.monthlyRates?.length)))+button('+ Nova cobrança','recurring','','primary'))}${card('Cobranças mensais',es.map(expenseRow).join('')||'<p>Nenhuma cobrança cadastrada.</p>')}`;}
@@ -29,7 +29,7 @@ const field=(name,label,type='text',v='',extra='')=>`<label>${label}<input name=
 const cents=v=>{const s=String(v).trim().replace(',','.');if(!/^\d{1,10}(\.\d{1,2})?$/.test(s))throw Error('Informe um valor válido (ex.: 25,90).');return Math.round(Number(s)*100)};
 const moneyField=(name,label,v=0)=>field(name,label,'text',amount(v),'inputmode="decimal" required');
 const reducedMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
-let savedScroll=0,closingEditor=false,pageMotion=null;
+let savedScroll=0,closingEditor=false,pageMotion=null,queuedPage=null;
 function modal(title,fields,fn){
   const editor=$('editor');
   $('form-title').textContent=title;$('fields').innerHTML=fields;$('error').textContent='';handler=fn;
@@ -49,15 +49,42 @@ $('editor').addEventListener('cancel',event=>{event.preventDefault();closeEditor
 $('editor').addEventListener('close',()=>{
   document.body.classList.remove('modal-open');document.body.style.top='';window.scrollTo(0,savedScroll);
 });
-function changePage(id){
+function updateNavIndicator(){
+  const nav=$('nav'),indicator=nav.querySelector('.nav-indicator');
+  const tab=nav.querySelector(`[data-arg="${active}"]`);
+  if(!tab||!indicator)return;
+  indicator.style.width=`${tab.offsetWidth}px`;
+  indicator.style.transform=`translate3d(${tab.offsetLeft-7}px,0,0)`;
+}
+window.addEventListener('resize',updateNavIndicator);
+async function changePage(id){
+  if(pageMotion){queuedPage=id;return;}
   if(active===id)return;
   const direction=pages.findIndex(([key])=>key===id)>pages.findIndex(([key])=>key===active)?1:-1;
-  if(pageMotion)pageMotion.cancel();
-  active=id;render();window.scrollTo(0,0);
-  if(!reducedMotion())pageMotion=$('screen').animate([
-    {transform:`translate3d(${direction*32}px,0,0)`,opacity:.25},
-    {transform:'translate3d(0,0,0)',opacity:1}
-  ],{duration:420,easing:'cubic-bezier(.16,1,.3,1)'});
+  const screen=$('screen'),rect=screen.getBoundingClientRect();
+  let layer=null,outgoing=null;
+  if(!reducedMotion()){
+    // Keep the old screen visible while the new screen pushes it away.
+    layer=document.createElement('div');layer.className='page-transition-layer';
+    layer.setAttribute('aria-hidden','true');layer.inert=true;
+    outgoing=screen.cloneNode(true);outgoing.removeAttribute('id');
+    outgoing.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+    outgoing.className='page-outgoing';
+    Object.assign(outgoing.style,{position:'absolute',top:`${rect.top}px`,left:`${rect.left}px`,width:`${rect.width}px`,margin:'0'});
+    layer.append(outgoing);document.body.append(layer);
+  }
+  active=id;render();window.scrollTo({top:0,behavior:'instant'});
+  if(!layer)return;
+  const distance=document.documentElement.clientWidth;
+  const timing={duration:480,easing:'cubic-bezier(.22,.8,.22,1)',fill:'both'};
+  screen.classList.add('page-moving');
+  const incoming=screen.animate([{transform:`translate3d(${direction*distance}px,0,0)`},{transform:'translate3d(0,0,0)'}],timing);
+  const leaving=outgoing.animate([{transform:'translate3d(0,0,0)'},{transform:`translate3d(${-direction*distance}px,0,0)`}],timing);
+  pageMotion=incoming;
+  try{await Promise.all([incoming.finished,leaving.finished]);}catch{}finally{
+    incoming.cancel();leaving.cancel();layer.remove();screen.classList.remove('page-moving');pageMotion=null;
+    const next=queuedPage;queuedPage=null;if(next&&next!==active)changePage(next);
+  }
 }
 
 function editExpense(id,recurring=false){const root=L.value(rows[id],'expense'),existing=root&&L.occurrence(root,Math.max(current(),root.monthlyRates?.[0]?.start||0)),e=existing||root;recurring=recurring||!!root?.monthlyRates?.length;const d=e?L.fromSwift(e.date):day&&active==='agenda'?L.date(selected,day):today();modal(root?'Editar gasto':recurring?'Nova cobrança':'Novo gasto',field('title','Nome','text',e?.title||'','required maxlength="120"')+moneyField('amount','Valor (R$)',e?.cents||0)+`<label>Categoria<select name="category">${L.categories.map(c=>`<option ${c===e?.category?'selected':''}>${c}</option>`).join('')}</select></label>`+field('date',recurring?'Início da cobrança':'Data','date',L.iso(d),'required')+(recurring?field('due','Dia da cobrança','number',existing?.day||d.getDate(),'min="1" max="31" required'):'<label><input type="checkbox" name="fixed" '+(e?.fixed?'checked':'')+'>Gasto essencial</label>'),f=>{const title=f.get('title').trim(),v=cents(f.get('amount')),dt=L.parseDate(f.get('date')),category=f.get('category');if(!title||v<=0||!Number.isFinite(dt.getTime()))throw Error('Preencha os dados do gasto.');const key=id||L.uuid();let next={id:key,title,cents:v,category,date:L.swift(dt),fixed:recurring||f.has('fixed'),civilDay:L.stamp(dt)};if(recurring){const start=root?Math.max(current(),root.monthlyRates[0].start):L.month(dt);const rate={start,title,cents:v,day:Number(f.get('due')),category};next={...(root||next),monthlyRates:[...(root?.monthlyRates||[]).filter(x=>x.start!==start),rate].sort((a,b)=>a.start-b.start)};}set(key,L.content('expense',next));});}
