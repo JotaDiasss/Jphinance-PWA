@@ -22,3 +22,15 @@ test('AES-GCM authenticates data and preserves Swift ledger format',async()=>{
   const other=await C.syncKeys(L.b64(new Uint8Array(32).fill(1)));
   await assert.rejects(C.open(blob,other.key));
 });
+
+test('trocar de cofre preserva o valor local e incorpora registros exclusivos do destino', async () => {
+  const {mergeOnRelink, merge} = await import('../src/domain/ledger.js');
+  const entry = (clock, n) => ({clock, device:'device', value:{budget:n}});
+  const local = {budget:entry(1,100), savings:entry(2,50)};
+  const remote = {budget:entry(5,200), goal:entry(3,500)};
+  const result = mergeOnRelink(local, remote, 'phone');
+  assert.deepEqual(result.budget, {...local.budget, clock:6, device:'phone'});
+  assert.deepEqual(result.savings, local.savings);
+  assert.deepEqual(result.goal, remote.goal);
+  assert.deepEqual(merge(remote, result), result);
+});

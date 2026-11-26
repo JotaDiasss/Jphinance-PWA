@@ -22,3 +22,16 @@ export function deposits(rows){return Object.entries(rows).flatMap(([id,r])=>{co
 export const depositKey=(box,d)=>`savings.v1:${uuid()}:${stamp(d)}:${b64(enc.encode(box.normalize('NFC')))}`;
 export function merge(a,b){const out=Object.assign(Object.create(null),a);for(const [id,e] of Object.entries(b)){const old=out[id];if(!old||e.clock>old.clock||(e.clock===old.clock&&e.device>old.device))out[id]=e;}return out;}
 export function validate(rows){if(!rows||typeof rows!=='object'||Array.isArray(rows))throw Error('Formato de dados inválido');for(const e of Object.values(rows)){if(!e||!Number.isSafeInteger(e.clock)||typeof e.device!=='string'||!e.value||typeof e.value!=='object')throw Error('Registro inválido');}return rows;}
+
+// Retain local values when first combining two previously independent vaults.
+export function mergeOnRelink(local, remote, device) {
+  const combined = merge(local, remote);
+  for (const [id, entry] of Object.entries(local)) {
+    const incoming = remote[id];
+    if (!incoming || JSON.stringify(entry.value) === JSON.stringify(incoming.value)) continue;
+    if (entry.clock > incoming.clock) continue;
+    if (!Number.isSafeInteger(incoming.clock + 1)) throw Error('Revisão fora do limite.');
+    combined[id] = {...entry, clock: incoming.clock + 1, device};
+  }
+  return combined;
+}
