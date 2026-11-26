@@ -35,3 +35,23 @@ export function mergeOnRelink(local, remote, device) {
   }
   return combined;
 }
+
+// Move deposits as one persisted batch, preserving IDs, dates and amounts.
+export function renameBox(rows, oldName, requestedName, device) {
+  const name = String(requestedName).trim().normalize('NFC');
+  if (!name || name.length > 64) throw Error('Informe um nome de até 64 caracteres.');
+  if (name === oldName) return rows;
+  const items = deposits(rows).filter(d => d.box === oldName);
+  if (!items.length) throw Error('Esta caixinha não existe mais.');
+  if (deposits(rows).some(d => d.box !== oldName && d.box.toLocaleLowerCase('pt-BR') === name.toLocaleLowerCase('pt-BR'))) throw Error('Já existe uma caixinha com esse nome.');
+  let clock = Math.max(0, ...Object.values(rows).map(e => e.clock));
+  const next = {...rows};
+  for (const item of items) {
+    const parts = item.id.split(':');
+    parts[3] = b64(enc.encode(name));
+    const id = parts.join(':');
+    next[item.id] = {clock: ++clock, device, value: content('deleted')};
+    next[id] = {clock: ++clock, device, value: content('budget', item.cents)};
+  }
+  return next;
+}
