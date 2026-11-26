@@ -76,7 +76,7 @@ async function changePage(id){
   active=id;render();window.scrollTo({top:0,behavior:'instant'});
   if(!layer)return;
   const distance=document.documentElement.clientWidth;
-  const timing={duration:850,easing:'cubic-bezier(.22,.8,.22,1)',fill:'both'};
+  const timing={duration:850,easing:'linear',fill:'both'};
   screen.classList.add('page-moving');
   const incoming=screen.animate([{transform:`translate3d(${direction*distance}px,0,0)`},{transform:'translate3d(0,0,0)'}],timing);
   const leaving=outgoing.animate([{transform:'translate3d(0,0,0)'},{transform:`translate3d(${-direction*distance}px,0,0)`}],timing);
