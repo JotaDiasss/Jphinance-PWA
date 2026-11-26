@@ -4,7 +4,7 @@ main{padding-bottom:calc(126px + env(safe-area-inset-bottom))}
 .icon{width:20px;height:20px;flex-shrink:0;vertical-align:middle}
 button{display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:background .18s,border-color .18s,box-shadow .18s,transform .18s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 button:active{transform:scale(.96)}
-nav{bottom:calc(12px + env(safe-area-inset-bottom));left:12px;right:12px;width:calc(100% - 24px);max-width:640px;margin:auto;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));padding:7px;border:1px solid #ffffff30;border-radius:36px;background:#24332ef5;box-shadow:0 14px 40px #0006,inset 0 1px 0 #ffffff25;isolation:isolate}
+nav{bottom:max(4px, env(safe-area-inset-bottom));left:12px;right:12px;width:calc(100% - 24px);max-width:640px;margin:auto;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));padding:7px;border:1px solid #ffffff30;border-radius:36px;background:#24332ef5;box-shadow:0 14px 40px #0006,inset 0 1px 0 #ffffff25;isolation:isolate}
 @supports ((backdrop-filter:blur(24px)) or (-webkit-backdrop-filter:blur(24px))){nav{background:linear-gradient(135deg,#52685a55,#1b2928b8);backdrop-filter:blur(26px) saturate(165%);-webkit-backdrop-filter:blur(26px) saturate(165%)}}
 nav button{position:relative;flex-direction:column;gap:4px;max-width:none;min-height:60px;min-width:0;padding:7px 0;border-radius:28px;font-size:10px;letter-spacing:-.15px;color:#becbc5;background:transparent;z-index:1}
 nav button .icon{width:23px;height:23px;transition:transform .25s}
@@ -17,11 +17,22 @@ nav button.active .icon{transform:translateY(-1px)}
 .actions{gap:10px}
 .card details{margin-top:18px}
 summary{min-height:44px;cursor:pointer;align-content:center;color:var(--muted)}
-dialog[open]{animation:modal-in .25s cubic-bezier(.2,.8,.2,1)}
-dialog[open]::backdrop{animation:backdrop-in .22s ease;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
-@keyframes modal-in{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:none}}
+dialog[open]{animation:modal-in .4s cubic-bezier(.16,1,.3,1)}
+dialog[open]::backdrop{animation:backdrop-in .3s ease;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+@keyframes modal-in{from{opacity:0;transform:translate3d(0,48px,0)}to{opacity:1;transform:none}}
 @keyframes backdrop-in{from{opacity:0}to{opacity:1}}
 @media(hover:hover) and (pointer:fine){button:hover{border-color:#a1efc77a;background:#3a5145;transform:translateY(-1px)}button.primary:hover{background:#bcf6d9}nav button:hover{background:#ffffff0c;color:#eff8f3}}
 @media(max-width:359px){nav{left:8px;right:8px;width:calc(100% - 16px)}nav button{font-size:9px}nav button .icon{width:21px;height:21px}main{padding-left:14px;padding-right:14px}.card{padding:16px}}
 @media(prefers-reduced-transparency:reduce){nav{background:#24332e;backdrop-filter:none;-webkit-backdrop-filter:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}button:active{transform:none}}
+
+/* Keep native iOS date controls inside the same column as other fields. */
+html{overflow-x:clip}
+body.modal-open{position:fixed;left:0;right:0;width:100%;overflow:hidden;overscroll-behavior:none}
+dialog{max-width:calc(100vw - 24px);max-height:calc(100dvh - 40px);overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-gutter:stable}
+dialog form,#fields,#fields label{min-width:0;max-width:100%}
+input,select{max-width:100%;min-inline-size:0;min-height:48px}
+input[type=date]{appearance:none;-webkit-appearance:none;display:block;width:100%;max-width:100%;min-width:0;min-inline-size:0;height:48px;padding:10px 13px;overflow:hidden}
+input[type=date]::-webkit-date-and-time-value{text-align:left;min-width:0;margin:0}
+input[type=date]::-webkit-datetime-edit{min-width:0;padding:0}
+.nav-indicator{transition:transform .42s cubic-bezier(.16,1,.3,1)}
