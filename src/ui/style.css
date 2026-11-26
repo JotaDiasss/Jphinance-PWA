@@ -4,7 +4,7 @@ main{padding-bottom:calc(126px + env(safe-area-inset-bottom))}
 .icon{width:20px;height:20px;flex-shrink:0;vertical-align:middle}
 button{display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:background .18s,border-color .18s,box-shadow .18s,transform .18s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 button:active{transform:scale(.96)}
-nav{bottom:max(4px, env(safe-area-inset-bottom));left:12px;right:12px;width:calc(100% - 24px);max-width:640px;margin:auto;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));padding:7px;border:1px solid #ffffff30;border-radius:36px;background:#24332ef5;box-shadow:0 14px 40px #0006,inset 0 1px 0 #ffffff25;isolation:isolate}
+nav{bottom:max(4px, calc(env(safe-area-inset-bottom) - 12px));left:12px;right:12px;width:calc(100% - 24px);max-width:640px;margin:auto;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));padding:7px;border:1px solid #ffffff30;border-radius:36px;background:#24332ef5;box-shadow:0 14px 40px #0006,inset 0 1px 0 #ffffff25;isolation:isolate}
 @supports ((backdrop-filter:blur(24px)) or (-webkit-backdrop-filter:blur(24px))){nav{background:linear-gradient(135deg,#52685a55,#1b2928b8);backdrop-filter:blur(26px) saturate(165%);-webkit-backdrop-filter:blur(26px) saturate(165%)}}
 nav button{position:relative;flex-direction:column;gap:4px;max-width:none;min-height:60px;min-width:0;padding:7px 0;border-radius:28px;font-size:10px;letter-spacing:-.15px;color:#becbc5;background:transparent;z-index:1}
 nav button .icon{width:23px;height:23px;transition:transform .25s}
@@ -42,7 +42,7 @@ body{overflow-x:hidden}
 .page-transition-layer{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:1}
 .page-outgoing{max-width:900px;padding:12px 20px calc(126px + env(safe-area-inset-bottom));will-change:transform;backface-visibility:hidden}
 .page-moving{will-change:transform;backface-visibility:hidden;pointer-events:none}
-.nav-indicator{transform:translate3d(0,0,0);transition:transform .48s cubic-bezier(.22,.8,.22,1),width .48s cubic-bezier(.22,.8,.22,1);will-change:transform}
+.nav-indicator{transform:translate3d(0,0,0);transition:transform .7s cubic-bezier(.22,.8,.22,1),width .7s cubic-bezier(.22,.8,.22,1);will-change:transform}
 nav button{transition:color .3s ease,background .2s ease;transform:none!important}
 nav button .icon{transition:color .3s ease;transform:none!important}
 @media(min-width:700px){.page-outgoing{padding-top:20px}}
