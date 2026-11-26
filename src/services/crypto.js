@@ -1,0 +1,8 @@
+import { b64, un64, validate } from "../domain/ledger.js";
+const enc = new TextEncoder(), dec = new TextDecoder();
+export function parseLink(link){const u=new URL(link.trim());if(u.protocol!=='https:'||u.pathname!=='/parear'||u.username||u.password||u.search||!/^#[A-Za-z0-9_-]{43}$/.test(u.hash))throw Error('Cole o link privado completo.');const secret=un64(u.hash.slice(1).replace(/-/g,'+').replace(/_/g,'/')+'=');if(secret.length!==32)throw Error('Chave inválida');return {origin:u.origin,secret:b64(secret)};}
+export async function derive(secret,purpose){const key=await crypto.subtle.importKey('raw',un64(secret),'HKDF',false,['deriveBits']);return crypto.subtle.deriveBits({name:'HKDF',hash:'SHA-256',salt:enc.encode('Jphinance 1'),info:enc.encode(purpose)},key,256);}
+export async function syncKeys(secret){return {token:b64(await derive(secret,'login')),key:await crypto.subtle.importKey('raw',await derive(secret,'vault'),'AES-GCM',false,['encrypt','decrypt'])};}
+export async function seal(rows,key){const iv=crypto.getRandomValues(new Uint8Array(12));return {iv:b64(iv),data:b64(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(JSON.stringify(rows))))};}
+export async function open(blob,key){if(!blob)return {};return validate(JSON.parse(dec.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:un64(blob.iv)},key,un64(blob.data)))));}
+export async function request(origin,body){const r=await fetch(origin+'/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error('Servidor indisponível ('+r.status+')');return r.json();}
